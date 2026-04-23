@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0d0f0e;--surface:#141614;--surface2:#1a1d1a;--border:#2a2e2a;--border2:#343834;--text:#e8ede8;--text2:#8a9488;--text3:#4a5248;--green:#4ade80;--red:#f87171;--gold:#fbbf24;--blue:#60a5fa;--accent:#a3e635;}
+html,body{min-height:100%;background:var(--bg);}
+body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
+.app{max-width:900px;margin:0 auto;padding:24px 16px 60px;}
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap;}
+.header-left h1{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px;}
+.header-left p{font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.header-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.hbtn{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:8px 12px;border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:5px;transition:all 0.2s;white-space:nowrap;}
+.hbtn:hover{border-color:var(--accent);color:var(--accent);}
+.hbtn.active{border-color:var(--accent);color:var(--accent);}
+.hbtn-label{cursor:pointer;}
+.spin{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tip{font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:0.5px;}
+.tip strong{color:var(--text2);}
+/* API */
+.api-wrap{margin-bottom:12px;}
+.api-toggle{background:transparent;border:1px solid var(--border);color:var(--text3);padding:6px 12px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.api-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-top:6px;display:none;align-items:center;gap:10px;flex-wrap:wrap;}
+.api-panel.open{display:flex;}
+.api-panel label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.api-panel input{flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);outline:none;}
+.api-save{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);padding:7px 14px;border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;}
+.api-save:hover{color:var(--accent);}
+.api-ok{color:var(--green);font-size:10px;}
+/* FX */
+.fx-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.fx-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+.fx-input{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);outline:none;width:110px;}
+.last-update{font-size:10px;color:var(--text3);}
+/* SUMMARY */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:20px;}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.sum-lbl{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.sum-val{font-size:21px;font-weight:500;font-family:'Syne',sans-serif;}
+.sum-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.pos{color:var(--green);}
+.neg{color:var(--red);}
+/* PIE */
+.chart-section{display:grid;grid-template-columns:140px 1fr;gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;}
+.pie-wrap{position:relative;width:120px;height:120px;}
+.pie-wrap svg{width:120px;height:120px;}
+.pie-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.pie-cval{font-size:13px;font-weight:500;font-family:'Syne',sans-serif;}
+.pie-clbl{font-size:9px;color:var(--text3);letter-spacing:1px;}
+.legend{display:flex;flex-direction:column;gap:8px;}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.leg-name{color:var(--text2);flex:1;}
+.leg-pct{color:var(--text);font-weight:500;}
+.leg-val{color:var(--text3);font-size:11px;}
+/* SECTIONS */
+.section{margin-bottom:18px;}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sec-title{font-size:11px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;}
+.add-btn{background:transparent;border:1px solid var(--border);color:var(--text3);padding:5px 10px;border-radius:5px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all 0.2s;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* TABLE */
+.asset-table{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.asset-head{font-size:10px;color:var(--text3);letter-spacing:1px;padding:8px 14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 90px 90px 80px 60px 52px;gap:8px;}
+.asset-row{display:grid;grid-template-columns:1fr 90px 90px 80px 60px 52px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:8px;transition:background 0.15s;}
+.asset-row:last-child{border-bottom:none;}
+.asset-row:hover{background:var(--surface2);}
+.aname{font-size:13px;font-weight:500;}
+.aticker{font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:1px;}
+.aprice{font-size:12px;text-align:right;}
+.aprice-sub{font-size:10px;color:var(--text3);text-align:right;margin-top:1px;}
+.aval{font-size:13px;font-weight:500;text-align:right;}
+.apl{font-size:12px;text-align:right;}
+.apct{font-size:11px;text-align:right;color:var(--text3);}
+.del-btn{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:3px;border-radius:4px;text-align:center;}
+.del-btn:hover{color:var(--red);}
+.loading-p{color:var(--text3);font-size:11px;}
+.error-p{color:var(--red);font-size:10px;}
+.empty{padding:22px;text-align:center;color:var(--text3);font-size:12px;}
+/* FORM */
+.add-form{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:6px;display:none;}
+.add-form.open{display:block;}
+.form-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:90px;}
+.fg label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+.fg input{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);outline:none;width:100%;}
+.fg input::placeholder{color:var(--text3);}
+.fsub{background:var(--surface);border:1px solid var(--border2);color:var(--text2);padding:8px 14px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;white-space:nowrap;align-self:flex-end;}
+.fsub:hover{color:var(--accent);border-color:var(--accent);}
+.form-hint{font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;}
+/* PLATFORM TOGGLE */
+.plat-toggle{display:flex;margin-bottom:10px;}
+.pt-btn{padding:7px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);transition:all 0.2s;}
+.pt-btn:first-child{border-radius:6px 0 0 6px;}
+.pt-btn:last-child{border-radius:0 6px 6px 0;}
+.pt-btn.active{background:var(--accent);color:#0d0f0e;border-color:var(--accent);font-weight:600;}
+/* AI */
+/* PRIVACY */
+.privacy-blur .mask-val{filter:blur(6px);user-select:none;}
+/* EXPORT MODAL */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#141614;border:1px solid #2a2e2a;border-radius:12px;padding:20px;max-width:560px;width:100%;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.modal-title{font-family:'Syne',sans-serif;font-size:15px;}
+.modal-close{background:transparent;border:none;color:var(--text3);font-size:20px;cursor:pointer;}
+.modal-ta{width:100%;height:200px;background:#0d0f0e;border:1px solid #2a2e2a;border-radius:8px;padding:10px;font-family:'DM Mono',monospace;font-size:11px;color:#8a9488;resize:none;outline:none;}
+.modal-btns{display:flex;gap:8px;margin-top:12px;}
+.modal-copy{flex:1;background:var(--accent);border:none;color:#0d0f0e;padding:10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;cursor:pointer;}
+.modal-cancel{background:transparent;border:1px solid #2a2e2a;color:#4a5248;padding:10px 16px;border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;}
+@media(max-width:600px){
+  .asset-head,.asset-row{grid-template-columns:1fr 80px 70px 55px 0 48px;}
+  .apct{display:none;}
+}
+
+.tab-nav{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);}
+.tab-btn{background:transparent;border:none;color:var(--text3);padding:10px 18px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-btn:hover{color:var(--text2);}
+.tab-page{display:none;}
+.tab-page.active{display:block;}
+.watch-form{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:6px;display:none;}
+.watch-form.open{display:block;}
+.watch-table{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:0;}
+.watch-head{font-size:10px;color:var(--text3);letter-spacing:1px;padding:8px 14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 90px 80px 80px 36px;gap:8px;}
+.watch-row{display:grid;grid-template-columns:1fr 90px 80px 80px 36px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:8px;transition:background 0.15s;}
+.watch-row:last-child{border-bottom:none;}
+.watch-row:hover{background:var(--surface2);}
+.watch-alert{font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.alert-above{background:rgba(74,222,128,0.15);color:var(--green);}
+.alert-below{background:rgba(248,113,113,0.15);color:var(--red);}
+.alert-none{color:var(--text3);}
+</style>
+</head>
+<body>
+<div class="app" id="appRoot">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Portfolio</h1>
+      <p>Real-time tracker · IDR base</p>
+    </div>
+    <div class="header-btns">
+      <button class="hbtn" id="exportBtn">⬇ Export</button>
+      <button class="hbtn" id="importBtn">⬆ Import</button>
+      <button class="hbtn" id="privacyBtn">👁 Privacy</button>
+      <button class="hbtn" id="refreshBtn">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="portfolio">Portfolio</button>
+    <button class="tab-btn" data-tab="watchlist">Watchlist</button>
+  </div>
+
+  <div class="tab-page active" id="tab-portfolio">
+
+  <div class="api-wrap">
+    <button class="api-toggle" id="apiToggle">▶ API Settings <span class="api-ok" id="apiStatus"></span></button>
+    <div class="api-panel" id="apiPanel">
+      <label>Finnhub</label>
+      <input type="password" id="finnhubKey" placeholder="Finnhub key (US Stocks)">
+      <button class="api-save" id="apiSave">Save</button>
+    </div>
+  </div>
+
+  <div class="tip">⚠ Decimal: always use <strong>dot (.)</strong> — e.g. <code>0.05</code> or <code>65000.50</code></div>
+
+  <div class="fx-row">
+    <span class="fx-label">USD/IDR</span>
+    <input class="fx-input" type="number" id="fxRate" value="16200">
+    <span class="fx-label" style="margin-left:8px;">Cash (IDR)</span>
+    <input class="fx-input" type="number" id="cashIDR" value="0" placeholder="0" style="width:130px;" oninput="recalcAll()">
+    <span class="last-update" id="lastUpdate">not refreshed yet</span>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="sum-grid">
+    <div class="sum-card"><div class="sum-lbl">Total Portfolio</div><div class="sum-val mask-val" id="sumTotal">Rp —</div><div class="sum-sub mask-val" id="sumTotalUSD">— USD</div></div>
+    <div class="sum-card"><div class="sum-lbl">Total P&L</div><div class="sum-val mask-val" id="sumPL">—</div><div class="sum-sub" id="sumPLpct">—</div></div>
+    <div class="sum-card"><div class="sum-lbl">Crypto</div><div class="sum-val mask-val" id="sumCrypto">Rp —</div><div class="sum-sub" id="sumCryptoPct">—%</div></div>
+    <div class="sum-card"><div class="sum-lbl">US Stocks</div><div class="sum-val mask-val" id="sumUS">Rp —</div><div class="sum-sub" id="sumUSPct">—%</div></div>
+    <div class="sum-card"><div class="sum-lbl">IDX Stocks</div><div class="sum-val mask-val" id="sumIDX">Rp —</div><div class="sum-sub" id="sumIDXPct">—%</div></div>
+    <div class="sum-card"><div class="sum-lbl">Cash</div><div class="sum-val mask-val" id="sumCash">Rp 0</div><div class="sum-sub" id="sumCashPct">—% of portfolio</div></div>
+  </div>
+
+  <!-- PIE -->
+  <div class="chart-section">
+    <div class="pie-wrap"><svg id="pieChart" viewBox="0 0 120 120"></svg><div class="pie-center"><div class="pie-cval" id="pieCnt">—</div><div class="pie-clbl">assets</div></div></div>
+    <div class="legend" id="pieLegend"></div>
+  </div>
+
+  <!-- CRYPTO -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-title">Crypto</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="sortCrypto" style="background:var(--surface);border:1px solid var(--border);color:var(--text3);padding:4px 8px;border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;outline:none;cursor:pointer;">
+          <option value="default">Default</option>
+          <option value="value_desc">Value ↓</option>
+          <option value="value_asc">Value ↑</option>
+          <option value="pl_desc">P&L ↓</option>
+          <option value="pl_asc">P&L ↑</option>
+          <option value="pct_desc">P&L % ↓</option>
+          <option value="pct_asc">P&L % ↑</option>
+        </select>
+        <button class="add-btn" id="addCryptoBtn">+ Add</button>
+      </div>
+    </div>
+    <div class="add-form" id="cryptoForm">
+      <div class="form-row">
+        <div class="fg"><label>CoinGecko ID</label><input type="text" id="cId" placeholder="bitcoin / tether"></div>
+        <div class="fg"><label>Ticker</label><input type="text" id="cTicker" placeholder="BTC"></div>
+        <div class="fg"><label>Units</label><input type="number" id="cUnits" placeholder="0.5" step="any"></div>
+        <div class="fg"><label>Avg Buy (USD)</label><input type="number" id="cAvg" placeholder="60000" step="any"></div>
+        <button class="fsub" id="cSubmit">Add</button>
+      </div>
+      <div class="form-hint">IDs: bitcoin · ethereum · tether · hyperliquid · solana</div>
+    </div>
+    <div class="asset-table" id="cryptoTable">
+      <div class="asset-head"><span>Asset</span><span style="text-align:right">Price</span><span style="text-align:right">Value (IDR)</span><span style="text-align:right">P&L</span><span style="text-align:right">%</span><span></span></div>
+      <div class="empty" id="cryptoEmpty">No crypto added</div>
+    </div>
+  </div>
+
+  <!-- US STOCKS -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-title">US Stocks</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="sortUS" style="background:var(--surface);border:1px solid var(--border);color:var(--text3);padding:4px 8px;border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;outline:none;cursor:pointer;">
+          <option value="default">Default</option>
+          <option value="value_desc">Value ↓</option>
+          <option value="value_asc">Value ↑</option>
+          <option value="pl_desc">P&L ↓</option>
+          <option value="pl_asc">P&L ↑</option>
+          <option value="pct_desc">P&L % ↓</option>
+          <option value="pct_asc">P&L % ↑</option>
+        </select>
+        <button class="add-btn" id="addUSBtn">+ Add</button>
+      </div>
+    </div>
+    <div class="add-form" id="usForm">
+      <div class="plat-toggle">
+        <button class="pt-btn active" id="ptPluang">Pluang (USD)</button>
+        <button class="pt-btn" id="ptNano">Nanovest (IDR)</button>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Ticker</label><input type="text" id="usTicker" placeholder="JEPQ"></div>
+        <div class="fg"><label>Name</label><input type="text" id="usName" placeholder="JPMorgan ETF"></div>
+        <div class="fg"><label>Units</label><input type="number" id="usUnits" placeholder="10" step="any"></div>
+        <div class="fg"><label id="usAvgLbl">Avg Buy (USD)</label><input type="number" id="usAvg" placeholder="50" step="any"></div>
+        <button class="fsub" id="usSubmit">Add</button>
+      </div>
+      <div class="form-hint" id="usHint">Pluang: price auto-fetched in USD from Finnhub</div>
+    </div>
+    <div class="asset-table" id="usTable">
+      <div class="asset-head"><span>Asset</span><span style="text-align:right">Price</span><span style="text-align:right">Value (IDR)</span><span style="text-align:right">P&L</span><span style="text-align:right">%</span><span></span></div>
+      <div class="empty" id="usEmpty">No US stocks added</div>
+    </div>
+  </div>
+
+  <!-- IDX -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-title">IDX Stocks</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="sortIDX" style="background:var(--surface);border:1px solid var(--border);color:var(--text3);padding:4px 8px;border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;outline:none;cursor:pointer;">
+          <option value="default">Default</option>
+          <option value="value_desc">Value ↓</option>
+          <option value="value_asc">Value ↑</option>
+          <option value="pl_desc">P&L ↓</option>
+          <option value="pl_asc">P&L ↑</option>
+          <option value="pct_desc">P&L % ↓</option>
+          <option value="pct_asc">P&L % ↑</option>
+        </select>
+        <button class="add-btn" id="addIDXBtn">+ Add</button>
+      </div>
+    </div>
+    <div class="add-form" id="idxForm">
+      <div class="form-row">
+        <div class="fg"><label>Ticker (IDX)</label><input type="text" id="xTicker" placeholder="BBCA"></div>
+        <div class="fg"><label>Name</label><input type="text" id="xName" placeholder="Bank BCA"></div>
+        <div class="fg"><label>Units</label><input type="number" id="xUnits" placeholder="500"></div>
+        <div class="fg"><label>Avg Buy (IDR)</label><input type="number" id="xAvg" placeholder="9500"></div>
+        <div class="fg"><label>Current Price (IDR)</label><input type="number" id="xPrice" placeholder="auto-fetch or manual"></div>
+        <button class="fsub" id="xFetch" title="Fetch price from Yahoo Finance">↻ Fetch</button>
+        <button class="fsub" id="xSubmit">Add</button>
+      </div>
+      <div class="form-hint">Ticker format: BBCA, TLKM, GOTO — klik ↻ Fetch untuk ambil harga otomatis (Yahoo Finance, ~15min delay)</div>
+    </div>
+    <div class="asset-table" id="idxTable">
+      <div class="asset-head"><span>Asset</span><span style="text-align:right">Price</span><span style="text-align:right">Value (IDR)</span><span style="text-align:right">P&L</span><span style="text-align:right">%</span><span></span></div>
+      <div class="empty" id="idxEmpty">No IDX stocks added</div>
+    </div>
+  </div>
+  </div>
+
+</div>
+
+  </div><!-- end tab-portfolio -->
+
+  <!-- WATCHLIST TAB -->
+  <div class="tab-page" id="tab-watchlist">
+
+    <!-- CRYPTO WATCHLIST -->
+    <div class="section">
+      <div class="sec-header">
+        <span class="sec-title">Crypto Watchlist</span>
+        <button class="add-btn" id="addWCryptoBtn">+ Add</button>
+      </div>
+      <div class="watch-form" id="wCryptoForm">
+        <div class="form-row">
+          <div class="fg"><label>CoinGecko ID</label><input type="text" id="wcId" placeholder="bitcoin"></div>
+          <div class="fg"><label>Ticker</label><input type="text" id="wcTicker" placeholder="BTC"></div>
+          <div class="fg"><label>Alert Above (USD)</label><input type="number" id="wcAbove" placeholder="optional" step="any"></div>
+          <div class="fg"><label>Alert Below (USD)</label><input type="number" id="wcBelow" placeholder="optional" step="any"></div>
+          <button class="fsub" id="wcSubmit">Add</button>
+        </div>
+        <div class="form-hint">IDs: bitcoin · ethereum · solana · hyperliquid · tether</div>
+      </div>
+      <div class="watch-table" id="wCryptoTable">
+        <div class="watch-head"><span>Asset</span><span style="text-align:right">Price</span><span style="text-align:right">Alert ↑</span><span style="text-align:right">Alert ↓</span><span></span></div>
+        <div class="empty" id="wCryptoEmpty">No crypto in watchlist</div>
+      </div>
+    </div>
+
+    <!-- US WATCHLIST -->
+    <div class="section">
+      <div class="sec-header">
+        <span class="sec-title">US Stock Watchlist</span>
+        <button class="add-btn" id="addWUSBtn">+ Add</button>
+      </div>
+      <div class="watch-form" id="wUSForm">
+        <div class="form-row">
+          <div class="fg"><label>Ticker</label><input type="text" id="wusTicker" placeholder="AAPL"></div>
+          <div class="fg"><label>Name</label><input type="text" id="wusName" placeholder="Apple Inc."></div>
+          <div class="fg"><label>Alert Above (USD)</label><input type="number" id="wusAbove" placeholder="optional" step="any"></div>
+          <div class="fg"><label>Alert Below (USD)</label><input type="number" id="wusBelow" placeholder="optional" step="any"></div>
+          <button class="fsub" id="wusSubmit">Add</button>
+        </div>
+      </div>
+      <div class="watch-table" id="wUSTable">
+        <div class="watch-head"><span>Asset</span><span style="text-align:right">Price</span><span style="text-align:right">Alert ↑</span><span style="text-align:right">Alert ↓</span><span></span></div>
+        <div class="empty" id="wUSEmpty">No US stocks in watchlist</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--text3);margin-top:8px;">↻ Refresh untuk update harga watchlist · Alert highlight otomatis jika harga melewati target</div>
+
+  </div><!-- end tab-watchlist -->
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title">Import Data</span><button class="modal-close" id="importModalClose">✕</button></div>
+    <p style="font-size:11px;color:#4a5248;margin-bottom:10px;">Paste JSON data kamu di bawah ini lalu klik Import</p>
+    <textarea class="modal-ta" id="importTa" placeholder="Paste JSON di sini..."></textarea>
+    <div class="modal-btns">
+      <button class="modal-copy" id="importPasteBtn">⬆ Import</button>
+      <button class="modal-cancel" id="importCancelBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title" id="editModalTitle">Edit Position</span><button class="modal-close" id="editModalClose">✕</button></div>
+    <div id="editFields" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;"></div>
+    <div class="modal-btns">
+      <button class="modal-copy" id="editSaveBtn">Save</button>
+      <button class="modal-cancel" id="editCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title">Export Data</span><button class="modal-close" id="modalClose">✕</button></div>
+    <p style="font-size:11px;color:#4a5248;margin-bottom:10px;">Copy teks ini → simpan ke file .json atau Notes</p>
+    <textarea class="modal-ta" id="exportTa" readonly></textarea>
+    <div class="modal-btns">
+      <button class="modal-copy" id="copyBtn">⎘ Copy</button>
+      <button class="modal-cancel" id="cancelBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── STATE ──
+  var portfolio = { crypto: [], us: [], idx: [] };
+  var finnhubKey = '';
+  var usMode = 'usd';
+  var privacyOn = false;
+
+  // ── HELPERS ──
+  function fx() { return parseFloat(document.getElementById('fxRate').value) || 16200; }
+
+  function fmtIDR(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+  }
+  function fmtUSD(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function fmtPct(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+  }
+  function plCls(n) { return (n >= 0) ? 'pos' : 'neg'; }
+
+  function getCashIDR() { return parseFloat(document.getElementById('cashIDR').value) || 0; }
+  function getTotalIDR() { return getCryptoIDR() + getUSIDR() + getIDXIDR() + getCashIDR(); }
+  function getCryptoIDR() {
+    return portfolio.crypto.reduce(function(s, c) {
+      return s + (typeof c.currentPrice === 'number' ? c.currentPrice * c.units * fx() : 0);
+    }, 0);
+  }
+  function getUSIDR() {
+    return portfolio.us.reduce(function(s, u) {
+      return s + (typeof u.currentPrice === 'number' ? u.currentPrice * u.units * fx() : 0);
+    }, 0);
+  }
+  function getIDXIDR() {
+    return portfolio.idx.reduce(function(s, x) { return s + x.currentPrice * x.units; }, 0);
+  }
+  function getCryptoCost() {
+    return portfolio.crypto.reduce(function(s, c) { return s + c.avgBuy * c.units * fx(); }, 0);
+  }
+  function getUSCost() {
+    return portfolio.us.reduce(function(s, u) {
+      return s + (u.currency === 'idr' ? u.avgBuy * u.units : u.avgBuy * u.units * fx());
+    }, 0);
+  }
+  function getIDXCost() {
+    return portfolio.idx.reduce(function(s, x) { return s + x.avgBuy * x.units; }, 0);
+  }
+
+  // ── API TOGGLE ──
+  document.getElementById('apiToggle').addEventListener('click', function() {
+    var p = document.getElementById('apiPanel');
+    var open = p.classList.toggle('open');
+    var st = document.getElementById('apiStatus');
+    var stText = st ? st.textContent : '';
+    this.innerHTML = (open ? '▼' : '▶') + ' API Settings <span class="api-ok" id="apiStatus">' + stText + '</span>';
+  });
+  document.getElementById('apiSave').addEventListener('click', function() {
+    finnhubKey = document.getElementById('finnhubKey').value.trim();
+    var st = document.getElementById('apiStatus');
+    st.textContent = finnhubKey ? '✓ Finnhub saved' : '';
+    if (finnhubKey) refreshAll();
+  });
+
+  // ── FX ──
+  document.getElementById('fxRate').addEventListener('change', function() { recalcAll(); saveToStorage(); });
+
+  // ── PLATFORM TOGGLE ──
+  document.getElementById('ptPluang').addEventListener('click', function() { setUSMode('usd'); });
+  document.getElementById('ptNano').addEventListener('click', function() { setUSMode('idr'); });
+  function setUSMode(mode) {
+    usMode = mode;
+    document.getElementById('ptPluang').classList.toggle('active', mode === 'usd');
+    document.getElementById('ptNano').classList.toggle('active', mode === 'idr');
+    document.getElementById('usAvgLbl').textContent = mode === 'usd' ? 'Avg Buy (USD)' : 'Avg Buy (IDR)';
+    document.getElementById('usAvg').placeholder = mode === 'usd' ? '50' : '800000';
+    document.getElementById('usHint').textContent = mode === 'usd'
+      ? 'Pluang: price auto-fetched in USD from Finnhub'
+      : 'Nanovest: avg buy in IDR, price still fetched in USD from Finnhub';
+  }
+
+  // ── FORM TOGGLES ──
+  document.getElementById('addCryptoBtn').addEventListener('click', function() {
+    document.getElementById('cryptoForm').classList.toggle('open');
+  });
+  document.getElementById('addUSBtn').addEventListener('click', function() {
+    document.getElementById('usForm').classList.toggle('open');
+  });
+  document.getElementById('addIDXBtn').addEventListener('click', function() {
+    document.getElementById('idxForm').classList.toggle('open');
+  });
+  document.getElementById('xFetch').addEventListener('click', function() {
+    var ticker = document.getElementById('xTicker').value.trim();
+    if (!ticker) { alert('Masukkan ticker dulu.'); return; }
+    var btn = this;
+    btn.textContent = '...';
+    btn.disabled = true;
+    fetchIDXPrice(ticker, function(price) {
+      btn.textContent = '↻ Fetch';
+      btn.disabled = false;
+      if (price) {
+        document.getElementById('xPrice').value = Math.round(price);
+      } else {
+        alert('Tidak bisa fetch harga ' + ticker + '. Cek ticker atau input manual.');
+      }
+    });
+  });
+
+  // ── ADD CRYPTO ──
+  document.getElementById('cSubmit').addEventListener('click', function() {
+    var id = document.getElementById('cId').value.trim().toLowerCase();
+    var ticker = document.getElementById('cTicker').value.trim().toUpperCase();
+    var units = parseFloat(document.getElementById('cUnits').value);
+    var avg = parseFloat(document.getElementById('cAvg').value) || 0;
+    if (!id || !ticker || !units) { alert('Fill in ID, Ticker, and Units.'); return; }
+    portfolio.crypto.push({id:id, ticker:ticker, units:units, avgBuy:avg, currentPrice:null});
+    document.getElementById('cId').value = '';
+    document.getElementById('cTicker').value = '';
+    document.getElementById('cUnits').value = '';
+    document.getElementById('cAvg').value = '';
+    document.getElementById('cryptoForm').classList.remove('open');
+    saveToStorage();
+    fetchCrypto();
+  });
+
+  // ── ADD US ──
+  document.getElementById('usSubmit').addEventListener('click', function() {
+    var ticker = document.getElementById('usTicker').value.trim().toUpperCase();
+    var name = document.getElementById('usName').value.trim() || ticker;
+    var units = parseFloat(document.getElementById('usUnits').value);
+    var avg = parseFloat(document.getElementById('usAvg').value) || 0;
+    if (!ticker || !units) { alert('Fill in Ticker and Units.'); return; }
+    portfolio.us.push({ticker:ticker, name:name, units:units, avgBuy:avg, currency:usMode, currentPrice:null});
+    document.getElementById('usTicker').value = '';
+    document.getElementById('usName').value = '';
+    document.getElementById('usUnits').value = '';
+    document.getElementById('usAvg').value = '';
+    document.getElementById('usForm').classList.remove('open');
+    saveToStorage();
+    fetchUSAll();
+  });
+
+  // ── ADD IDX ──
+  document.getElementById('xSubmit').addEventListener('click', function() {
+    var ticker = document.getElementById('xTicker').value.trim().toUpperCase();
+    var name = document.getElementById('xName').value.trim() || ticker;
+    var units = parseFloat(document.getElementById('xUnits').value);
+    var avg = parseFloat(document.getElementById('xAvg').value) || 0;
+    var price = parseFloat(document.getElementById('xPrice').value);
+    if (!ticker || !units || !price) { alert('Fill in Ticker, Units, and Current Price.'); return; }
+    portfolio.idx.push({ticker:ticker, name:name, units:units, avgBuy:avg, currentPrice:price});
+    document.getElementById('xTicker').value = '';
+    document.getElementById('xName').value = '';
+    document.getElementById('xUnits').value = '';
+    document.getElementById('xAvg').value = '';
+    document.getElementById('xPrice').value = '';
+    document.getElementById('idxForm').classList.remove('open');
+    saveToStorage();
+    renderIDX();
+    recalcAll();
+    renderIDX();
+  });
+
+  // ── FETCH CRYPTO ──
+  function fetchCrypto() {
+    if (!portfolio.crypto.length) { renderCrypto(); recalcAll(); return; }
+    var ids = portfolio.crypto.map(function(c){return c.id;}).join(',');
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + ids + '&vs_currencies=usd')
+      .then(function(r){return r.json();})
+      .then(function(data) {
+        portfolio.crypto.forEach(function(c) {
+          if (data[c.id]) c.currentPrice = data[c.id].usd;
+        });
+        renderCrypto();
+        recalcAll();
+        renderCrypto();
+      })
+      .catch(function(e) {
+        console.error('CoinGecko error:', e);
+        renderCrypto();
+        recalcAll();
+      });
+  }
+
+  // ── FETCH US ──
+  function fetchUSOne(idx) {
+    if (!finnhubKey) { portfolio.us[idx].currentPrice = 'no-key'; return Promise.resolve(); }
+    return fetch('https://finnhub.io/api/v1/quote?symbol=' + portfolio.us[idx].ticker + '&token=' + finnhubKey)
+      .then(function(r){return r.json();})
+      .then(function(data) {
+        portfolio.us[idx].currentPrice = (data.c && data.c > 0) ? data.c : 'error';
+      })
+      .catch(function() { portfolio.us[idx].currentPrice = 'error'; });
+  }
+  function fetchUSAll() {
+    if (!portfolio.us.length) { renderUS(); recalcAll(); return; }
+    Promise.all(portfolio.us.map(function(_,i){return fetchUSOne(i);}))
+      .then(function() { renderUS(); recalcAll(); renderUS(); });
+  }
+
+  // ── FETCH IDX PRICE ──
+  function fetchIDXPrice(ticker, callback) {
+    var symbol = ticker.toUpperCase() + '.JK';
+    var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=1d';
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var price = null;
+        try {
+          var result = data.chart.result[0];
+          price = result.meta.regularMarketPrice;
+        } catch(e) { price = null; }
+        callback(price);
+      })
+      .catch(function() { callback(null); });
+  }
+
+  // ── RENDER CRYPTO ──
+  function renderCrypto() {
+    var table = document.getElementById('cryptoTable');
+    var empty = document.getElementById('cryptoEmpty');
+    Array.from(table.querySelectorAll('.asset-row')).forEach(function(r){r.remove();});
+    if (!portfolio.crypto.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    var total = getTotalIDR();
+    var cryptoList = sortAssets(portfolio.crypto, sortState.crypto, 'crypto');
+    cryptoList.forEach(function(c, i) {
+      var origIdx = portfolio.crypto.indexOf(c);
+      i = origIdx;
+      var price = typeof c.currentPrice === 'number' ? c.currentPrice : null;
+      var valIDR = price ? price * c.units * fx() : null;
+      var costIDR = c.avgBuy * c.units * fx();
+      var pl = (valIDR !== null && costIDR) ? valIDR - costIDR : null;
+      var plPct = (pl !== null && costIDR) ? (pl/costIDR)*100 : null;
+      var pctPort = (valIDR && total) ? (valIDR/total)*100 : null;
+      var priceDisp = price ? fmtUSD(price) : '<span class="loading-p">loading...</span>';
+      var row = document.createElement('div');
+      row.className = 'asset-row';
+      row.innerHTML =
+        '<div><div class="aname">' + c.ticker + '</div><div class="aticker">' + c.id + '</div></div>' +
+        '<div class="aprice mask-val">' + priceDisp + '<div class="aprice-sub">' + (c.avgBuy ? 'avg ' + fmtUSD(c.avgBuy) : '') + '</div></div>' +
+        '<div class="aval mask-val ' + (valIDR ? plCls(pl) : '') + '">' + (valIDR ? fmtIDR(valIDR) : '—') + '</div>' +
+        '<div class="apl ' + (pl !== null ? plCls(pl) : '') + '"><span class="mask-val">' + (pl !== null ? fmtIDR(pl) : '—') + '</span><br><span style="font-size:10px">' + (plPct !== null ? fmtPct(plPct) : '') + '</span></div>' +
+        '<div class="apct">' + (pctPort !== null ? pctPort.toFixed(1) + '%' : '—') + '</div>' +
+        '<div style="display:flex;gap:4px;"><button class="edit-btn" data-i="' + i + '" data-cat="crypto" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:3px;border-radius:4px;" title="Edit">✎</button><button class="del-btn" data-i="' + i + '" data-cat="crypto">✕</button></div>';
+      table.appendChild(row);
+    });
+  }
+
+  // ── RENDER US ──
+  function renderUS() {
+    var table = document.getElementById('usTable');
+    var empty = document.getElementById('usEmpty');
+    Array.from(table.querySelectorAll('.asset-row')).forEach(function(r){r.remove();});
+    if (!portfolio.us.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    var total = getTotalIDR();
+    var usList = sortAssets(portfolio.us, sortState.us, 'us');
+    usList.forEach(function(s, i) {
+      var origIdx = portfolio.us.indexOf(s);
+      i = origIdx;
+      var price = typeof s.currentPrice === 'number' ? s.currentPrice : null;
+      var isIDR = s.currency === 'idr';
+      var valIDR = price ? price * s.units * fx() : null;
+      var costIDR = isIDR ? s.avgBuy * s.units : s.avgBuy * s.units * fx();
+      var pl = (valIDR !== null && costIDR) ? valIDR - costIDR : null;
+      var plPct = (pl !== null && costIDR) ? (pl/costIDR)*100 : null;
+      var pctPort = (valIDR && total) ? (valIDR/total)*100 : null;
+      var badge = '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + (isIDR?'rgba(251,191,36,0.15)':'rgba(96,165,250,0.15)') + ';color:' + (isIDR?'#fbbf24':'#60a5fa') + ';vertical-align:middle;">' + (isIDR?'NANO':'PLG') + '</span>';
+      var priceDisp = '<span class="loading-p">loading...</span>';
+      if (s.currentPrice === 'no-key') priceDisp = '<span class="error-p">add API key</span>';
+      else if (s.currentPrice === 'error') priceDisp = '<span class="error-p">fetch error</span>';
+      else if (price) priceDisp = isIDR ? fmtIDR(price * fx()) : fmtUSD(price);
+      var row = document.createElement('div');
+      row.className = 'asset-row';
+      row.innerHTML =
+        '<div><div class="aname">' + s.ticker + ' ' + badge + '</div><div class="aticker">' + s.name + '</div></div>' +
+        '<div class="aprice mask-val">' + priceDisp + '<div class="aprice-sub">' + (s.avgBuy ? 'avg ' + (isIDR ? fmtIDR(s.avgBuy) : fmtUSD(s.avgBuy)) : '') + '</div></div>' +
+        '<div class="aval mask-val ' + (valIDR ? plCls(pl) : '') + '">' + (valIDR ? fmtIDR(valIDR) : '—') + '</div>' +
+        '<div class="apl ' + (pl !== null ? plCls(pl) : '') + '"><span class="mask-val">' + (pl !== null ? fmtIDR(pl) : '—') + '</span><br><span style="font-size:10px">' + (plPct !== null ? fmtPct(plPct) : '') + '</span></div>' +
+        '<div class="apct">' + (pctPort !== null ? pctPort.toFixed(1) + '%' : '—') + '</div>' +
+        '<div style="display:flex;gap:4px;"><button class="edit-btn" data-i="' + i + '" data-cat="us" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:3px;border-radius:4px;" title="Edit">✎</button><button class="del-btn" data-i="' + i + '" data-cat="us">✕</button></div>';
+      table.appendChild(row);
+    });
+  }
+
+  // ── RENDER IDX ──
+  function renderIDX() {
+    var table = document.getElementById('idxTable');
+    var empty = document.getElementById('idxEmpty');
+    Array.from(table.querySelectorAll('.asset-row')).forEach(function(r){r.remove();});
+    if (!portfolio.idx.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    var total = getTotalIDR();
+    var idxList = sortAssets(portfolio.idx, sortState.idx, 'idx');
+    idxList.forEach(function(s, i) {
+      var origIdx = portfolio.idx.indexOf(s);
+      i = origIdx;
+      var valIDR = s.currentPrice * s.units;
+      var costIDR = s.avgBuy * s.units;
+      var pl = valIDR - costIDR;
+      var plPct = costIDR ? (pl/costIDR)*100 : null;
+      var pctPort = total ? (valIDR/total)*100 : null;
+      var row = document.createElement('div');
+      row.className = 'asset-row';
+      row.innerHTML =
+        '<div><div class="aname">' + s.ticker + '</div><div class="aticker">' + s.name + '</div></div>' +
+        '<div class="aprice mask-val">' + fmtIDR(s.currentPrice) + '<div class="aprice-sub">' + (s.avgBuy ? 'avg ' + fmtIDR(s.avgBuy) : '') + '</div></div>' +
+        '<div class="aval mask-val ' + plCls(pl) + '">' + fmtIDR(valIDR) + '</div>' +
+        '<div class="apl ' + plCls(pl) + '"><span class="mask-val">' + fmtIDR(pl) + '</span><br><span style="font-size:10px">' + (plPct !== null ? fmtPct(plPct) : '') + '</span></div>' +
+        '<div class="apct">' + (pctPort !== null ? pctPort.toFixed(1) + '%' : '—') + '</div>' +
+        '<div style="display:flex;gap:4px;"><button class="edit-btn" data-i="' + i + '" data-cat="idx" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:3px;border-radius:4px;" title="Edit">✎</button><button class="del-btn" data-i="' + i + '" data-cat="idx">✕</button></div>';
+      table.appendChild(row);
+    });
+  }
+
+  // ── DELETE via event delegation ──
+  document.body.addEventListener('click', function(e) {
+    var btn = e.target.closest('.del-btn');
+    if (!btn) return;
+    var i = parseInt(btn.getAttribute('data-i'));
+    var cat = btn.getAttribute('data-cat');
+    if (cat === 'crypto') { portfolio.crypto.splice(i, 1); renderCrypto(); recalcAll(); renderCrypto(); }
+    else if (cat === 'us') { portfolio.us.splice(i, 1); renderUS(); recalcAll(); renderUS(); }
+    else if (cat === 'idx') { portfolio.idx.splice(i, 1); renderIDX(); recalcAll(); renderIDX(); }
+    else if (cat === 'wcrypto') { watchlist.crypto.splice(i, 1); renderWCrypto(); }
+    else if (cat === 'wus') { watchlist.us.splice(i, 1); renderWUS(); }
+    saveToStorage();
+  });
+
+  // ── RECALC SUMMARY + PIE ──
+  function recalcAll() {
+    var total = getTotalIDR();
+    var crypto = getCryptoIDR();
+    var us = getUSIDR();
+    var idx = getIDXIDR();
+    var totalCost = getCryptoCost() + getUSCost() + getIDXCost(); // cash excluded from P&L cost basis
+    var pl = total - totalCost;
+    var plPct = totalCost ? (pl/totalCost)*100 : null;
+
+    document.getElementById('sumTotal').textContent = total ? fmtIDR(total) : 'Rp —';
+    document.getElementById('sumTotalUSD').textContent = total ? fmtUSD(total/fx()) + ' USD' : '— USD';
+    document.getElementById('sumPL').textContent = totalCost ? fmtIDR(pl) : '—';
+    document.getElementById('sumPL').className = 'sum-val mask-val ' + (pl >= 0 ? 'pos' : 'neg');
+    document.getElementById('sumPLpct').textContent = plPct !== null ? fmtPct(plPct) : '—';
+    document.getElementById('sumCrypto').textContent = crypto ? fmtIDR(crypto) : 'Rp —';
+    document.getElementById('sumCryptoPct').textContent = total ? (crypto/total*100).toFixed(1) + '% of portfolio' : '—%';
+    document.getElementById('sumUS').textContent = us ? fmtIDR(us) : 'Rp —';
+    document.getElementById('sumUSPct').textContent = total ? (us/total*100).toFixed(1) + '% of portfolio' : '—%';
+    document.getElementById('sumIDX').textContent = idx ? fmtIDR(idx) : 'Rp —';
+    document.getElementById('sumIDXPct').textContent = total ? (idx/total*100).toFixed(1) + '% of portfolio' : '—%';
+    var cash = getCashIDR();
+    document.getElementById('sumCash').textContent = fmtIDR(cash);
+    document.getElementById('sumCashPct').textContent = total ? (cash/total*100).toFixed(1) + '% of portfolio' : '—%';
+
+    drawPie(crypto, us, idx, cash, total);
+  }
+
+  // ── PIE ──
+  function drawPie(crypto, us, idx, cash, total) {
+    var svg = document.getElementById('pieChart');
+    svg.innerHTML = '';
+    var count = portfolio.crypto.length + portfolio.us.length + portfolio.idx.length;
+    document.getElementById('pieCnt').textContent = count || '—';
+    if (!total) {
+      svg.innerHTML = '<circle cx="60" cy="60" r="46" fill="none" stroke="#2a2e2a" stroke-width="16"/>';
+      document.getElementById('pieLegend').innerHTML = '<div style="font-size:11px;color:#4a5248">Add assets to see allocation</div>';
+      return;
+    }
+    var segs = [{label:'Crypto',val:crypto,color:'#a3e635'},{label:'US Stocks',val:us,color:'#60a5fa'},{label:'IDX',val:idx,color:'#fbbf24'},{label:'Cash',val:cash,color:'#94a3b8'}].filter(function(s){return s.val>0;});
+    var circ = 2*Math.PI*46, offset = 0;
+    segs.forEach(function(seg) {
+      var dash = (seg.val/total)*circ;
+      var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',60); c.setAttribute('cy',60); c.setAttribute('r',46);
+      c.setAttribute('fill','none'); c.setAttribute('stroke',seg.color); c.setAttribute('stroke-width',16);
+      c.setAttribute('stroke-dasharray', dash + ' ' + (circ-dash));
+      c.setAttribute('stroke-dashoffset', -offset);
+      c.setAttribute('transform','rotate(-90 60 60)');
+      svg.appendChild(c);
+      offset += dash;
+    });
+    document.getElementById('pieLegend').innerHTML = segs.map(function(s) {
+      return '<div class="leg-item"><div class="leg-dot" style="background:'+s.color+'"></div><span class="leg-name">'+s.label+'</span><span class="leg-pct">'+(s.val/total*100).toFixed(1)+'%</span><span class="leg-val mask-val">'+fmtIDR(s.val)+'</span></div>';
+    }).join('');
+  }
+
+  // ── REFRESH ──
+  document.getElementById('refreshBtn').addEventListener('click', function() { refreshAll(); });
+  function refreshAll() {
+    var icon = document.getElementById('refreshBtn');
+    icon.textContent = '↻ ...';
+    Promise.all([
+      new Promise(function(res) {
+        if (!portfolio.crypto.length) { res(); return; }
+        var ids = portfolio.crypto.map(function(c){return c.id;}).join(',');
+        fetch('https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=usd')
+          .then(function(r){return r.json();})
+          .then(function(data) {
+            portfolio.crypto.forEach(function(c){if(data[c.id])c.currentPrice=data[c.id].usd;});
+            res();
+          }).catch(res);
+      }),
+      Promise.all(portfolio.us.map(function(_,i){return fetchUSOne(i);}))
+    ]).then(function() {
+      // Also refresh IDX prices
+      var idxPromises = portfolio.idx.map(function(x) {
+        return new Promise(function(res) {
+          fetchIDXPrice(x.ticker, function(price) {
+            if (price) x.currentPrice = Math.round(price);
+            res();
+          });
+        });
+      });
+      Promise.all(idxPromises).then(function() {
+        renderCrypto(); renderUS(); renderIDX();
+        recalcAll();
+        renderCrypto(); renderUS(); renderIDX();
+        icon.textContent = '↻ Refresh';
+        saveToStorage();
+        document.getElementById('lastUpdate').textContent = 'updated ' + new Date().toLocaleTimeString() + ' · auto-saved';
+      fetchWatchlistPrices();
+      });
+    });
+  }
+
+  // ── PRIVACY ──
+  document.getElementById('privacyBtn').addEventListener('click', function() {
+    privacyOn = !privacyOn;
+    document.getElementById('appRoot').classList.toggle('privacy-blur', privacyOn);
+    this.textContent = privacyOn ? '🙈 Privacy' : '👁 Privacy';
+    this.classList.toggle('active', privacyOn);
+  });
+
+  // ── EXPORT ──
+  document.getElementById('exportBtn').addEventListener('click', function() {
+    var data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      fxRate: fx(),
+      portfolio: portfolio
+    };
+    document.getElementById('exportTa').value = JSON.stringify(data, null, 2);
+    document.getElementById('exportModal').classList.add('open');
+  });
+  document.getElementById('modalClose').addEventListener('click', function() {
+    document.getElementById('exportModal').classList.remove('open');
+  });
+  document.getElementById('cancelBtn').addEventListener('click', function() {
+    document.getElementById('exportModal').classList.remove('open');
+  });
+  document.getElementById('copyBtn').addEventListener('click', function() {
+    var ta = document.getElementById('exportTa');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    var btn = this;
+    navigator.clipboard.writeText(ta.value).then(function() {
+      btn.textContent = '✓ Copied!';
+      setTimeout(function(){btn.textContent='⎘ Copy';}, 2000);
+    }).catch(function() {
+      document.execCommand('copy');
+      btn.textContent = '✓ Copied!';
+      setTimeout(function(){btn.textContent='⎘ Copy';}, 2000);
+    });
+  });
+
+  // ── IMPORT ──
+  document.getElementById('importBtn').addEventListener('click', function() {
+    document.getElementById('importTa').value = '';
+    document.getElementById('importModal').classList.add('open');
+  });
+  document.getElementById('importModalClose').addEventListener('click', function() {
+    document.getElementById('importModal').classList.remove('open');
+  });
+  document.getElementById('importCancelBtn').addEventListener('click', function() {
+    document.getElementById('importModal').classList.remove('open');
+  });
+  document.getElementById('importPasteBtn').addEventListener('click', function() {
+    var raw = document.getElementById('importTa').value.trim();
+    if (!raw) { alert('Paste JSON dulu.'); return; }
+    try {
+      var data = JSON.parse(raw);
+      if (!data.portfolio) throw new Error('invalid');
+      portfolio = data.portfolio;
+      portfolio.crypto = portfolio.crypto || [];
+      portfolio.us = portfolio.us || [];
+      portfolio.idx = portfolio.idx || [];
+      if (data.fxRate) document.getElementById('fxRate').value = data.fxRate;
+      document.getElementById('importModal').classList.remove('open');
+      saveToStorage();
+      refreshAll();
+    } catch(err) {
+      alert('Import gagal: format JSON tidak valid.');
+    }
+  });
+
+  // ── SORT ──
+  function sortAssets(arr, mode, cat) {
+    var sorted = arr.map(function(a, i) { return {asset: a, origIdx: i}; });
+    sorted.sort(function(a, b) {
+      var aA = a.asset, bA = b.asset;
+      var aVal, bVal, aPL, bPL, aPct, bPct;
+      if (cat === 'crypto') {
+        aVal = typeof aA.currentPrice === 'number' ? aA.currentPrice * aA.units * fx() : -Infinity;
+        bVal = typeof bA.currentPrice === 'number' ? bA.currentPrice * bA.units * fx() : -Infinity;
+        aPL = typeof aA.currentPrice === 'number' ? (aA.currentPrice * aA.units * fx()) - (aA.avgBuy * aA.units * fx()) : -Infinity;
+        bPL = typeof bA.currentPrice === 'number' ? (bA.currentPrice * bA.units * fx()) - (bA.avgBuy * bA.units * fx()) : -Infinity;
+        aPct = aA.avgBuy ? ((aA.currentPrice - aA.avgBuy) / aA.avgBuy) * 100 : -Infinity;
+        bPct = bA.avgBuy ? ((bA.currentPrice - bA.avgBuy) / bA.avgBuy) * 100 : -Infinity;
+      } else if (cat === 'us') {
+        aVal = typeof aA.currentPrice === 'number' ? aA.currentPrice * aA.units * fx() : -Infinity;
+        bVal = typeof bA.currentPrice === 'number' ? bA.currentPrice * bA.units * fx() : -Infinity;
+        var aCost = aA.currency === 'idr' ? aA.avgBuy * aA.units : aA.avgBuy * aA.units * fx();
+        var bCost = bA.currency === 'idr' ? bA.avgBuy * bA.units : bA.avgBuy * bA.units * fx();
+        aPL = aVal !== -Infinity ? aVal - aCost : -Infinity;
+        bPL = bVal !== -Infinity ? bVal - bCost : -Infinity;
+        aPct = aCost ? (aPL / aCost) * 100 : -Infinity;
+        bPct = bCost ? (bPL / bCost) * 100 : -Infinity;
+      } else {
+        aVal = aA.currentPrice * aA.units;
+        bVal = bA.currentPrice * bA.units;
+        aPL = aVal - (aA.avgBuy * aA.units);
+        bPL = bVal - (bA.avgBuy * bA.units);
+        aPct = aA.avgBuy ? (aPL / (aA.avgBuy * aA.units)) * 100 : -Infinity;
+        bPct = bA.avgBuy ? (bPL / (bA.avgBuy * bA.units)) * 100 : -Infinity;
+      }
+      if (mode === 'value_desc') return bVal - aVal;
+      if (mode === 'value_asc') return aVal - bVal;
+      if (mode === 'pl_desc') return bPL - aPL;
+      if (mode === 'pl_asc') return aPL - bPL;
+      if (mode === 'pct_desc') return bPct - aPct;
+      if (mode === 'pct_asc') return aPct - bPct;
+      return a.origIdx - b.origIdx;
+    });
+    return sorted.map(function(s) { return s.asset; });
+  }
+
+  document.getElementById('sortCrypto').addEventListener('change', function() {
+    sortState.crypto = this.value; renderCrypto();
+  });
+  document.getElementById('sortUS').addEventListener('change', function() {
+    sortState.us = this.value; renderUS();
+  });
+  document.getElementById('sortIDX').addEventListener('change', function() {
+    sortState.idx = this.value; renderIDX();
+  });
+
+  // ── EDIT MODAL ──
+  var editState = {cat: null, idx: null};
+  var sortState = {crypto:'default', us:'default', idx:'default'};
+
+  function openEditModal(cat, i) {
+    editState = {cat: cat, idx: i};
+    var asset = cat === 'crypto' ? portfolio.crypto[i] : cat === 'us' ? portfolio.us[i] : portfolio.idx[i];
+    var title = 'Edit ' + (asset.ticker || asset.id);
+    document.getElementById('editModalTitle').textContent = title;
+
+    var fields = '';
+    if (cat === 'crypto') {
+      fields = makeField('units', 'Units held', asset.units, 'any') +
+               makeField('avgBuy', 'Avg Buy (USD)', asset.avgBuy, 'any');
+    } else if (cat === 'us') {
+      var isIDR = asset.currency === 'idr';
+      fields = makeField('units', 'Units held', asset.units, 'any') +
+               makeField('avgBuy', 'Avg Buy (' + (isIDR ? 'IDR' : 'USD') + ')', asset.avgBuy, 'any');
+    } else {
+      fields = makeField('units', 'Units held', asset.units, 'any') +
+               makeField('avgBuy', 'Avg Buy (IDR)', asset.avgBuy, 'any') +
+               makeField('currentPrice', 'Current Price (IDR)', asset.currentPrice, 'any');
+    }
+    document.getElementById('editFields').innerHTML = fields;
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function makeField(id, label, val, step) {
+    var inp = document.createElement('input');
+    inp.id = 'ef_' + id;
+    inp.type = 'number';
+    inp.step = step;
+    inp.value = val || '';
+    inp.style.cssText = 'width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:12px;color:var(--text);outline:none;';
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px;';
+    lbl.textContent = label;
+    var wrap = document.createElement('div');
+    wrap.className = 'fg';
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    return wrap.outerHTML;
+  }
+
+  document.getElementById('editModalClose').addEventListener('click', function() {
+    document.getElementById('editModal').classList.remove('open');
+  });
+  document.getElementById('editCancelBtn').addEventListener('click', function() {
+    document.getElementById('editModal').classList.remove('open');
+  });
+  document.getElementById('editSaveBtn').addEventListener('click', function() {
+    var cat = editState.cat;
+    var i = editState.idx;
+    var units = parseFloat(document.getElementById('ef_units').value);
+    var avgBuy = parseFloat(document.getElementById('ef_avgBuy').value) || 0;
+    if (!units || units <= 0) { alert('Units harus lebih dari 0.'); return; }
+
+    if (cat === 'crypto') {
+      portfolio.crypto[i].units = units;
+      portfolio.crypto[i].avgBuy = avgBuy;
+    } else if (cat === 'us') {
+      portfolio.us[i].units = units;
+      portfolio.us[i].avgBuy = avgBuy;
+    } else {
+      var price = parseFloat(document.getElementById('ef_currentPrice').value);
+      if (!price) { alert('Masukkan current price.'); return; }
+      portfolio.idx[i].units = units;
+      portfolio.idx[i].avgBuy = avgBuy;
+      portfolio.idx[i].currentPrice = price;
+    }
+
+    saveToStorage();
+    document.getElementById('editModal').classList.remove('open');
+    if (cat === 'crypto') { renderCrypto(); }
+    else if (cat === 'us') { renderUS(); }
+    else { renderIDX(); }
+    recalcAll();
+    if (cat === 'crypto') renderCrypto();
+    else if (cat === 'us') renderUS();
+    else renderIDX();
+  });
+
+  // Hook edit button via event delegation (add to existing body click handler)
+  // We'll add a separate listener for edit
+  document.body.addEventListener('click', function(e) {
+    var btn = e.target.closest('.edit-btn');
+    if (!btn) return;
+    var i = parseInt(btn.getAttribute('data-i'));
+    var cat = btn.getAttribute('data-cat');
+    openEditModal(cat, i);
+  });
+
+  // ── WATCHLIST STATE ──
+  var watchlist = { crypto: [], us: [] };
+
+  // ── TAB SWITCHING ──
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-page').forEach(function(p){ p.classList.remove('active'); });
+      this.classList.add('active');
+      document.getElementById('tab-' + this.getAttribute('data-tab')).classList.add('active');
+    });
+  });
+
+  // ── WATCHLIST FORMS ──
+  document.getElementById('addWCryptoBtn').addEventListener('click', function() {
+    document.getElementById('wCryptoForm').classList.toggle('open');
+  });
+  document.getElementById('addWUSBtn').addEventListener('click', function() {
+    document.getElementById('wUSForm').classList.toggle('open');
+  });
+
+  document.getElementById('wcSubmit').addEventListener('click', function() {
+    var id = document.getElementById('wcId').value.trim().toLowerCase();
+    var ticker = document.getElementById('wcTicker').value.trim().toUpperCase();
+    var above = parseFloat(document.getElementById('wcAbove').value) || null;
+    var below = parseFloat(document.getElementById('wcBelow').value) || null;
+    if (!id || !ticker) { alert('Isi ID dan Ticker.'); return; }
+    watchlist.crypto.push({id:id, ticker:ticker, alertAbove:above, alertBelow:below, currentPrice:null});
+    document.getElementById('wcId').value = '';
+    document.getElementById('wcTicker').value = '';
+    document.getElementById('wcAbove').value = '';
+    document.getElementById('wcBelow').value = '';
+    document.getElementById('wCryptoForm').classList.remove('open');
+    fetchWatchlistPrices();
+  });
+
+  document.getElementById('wusSubmit').addEventListener('click', function() {
+    var ticker = document.getElementById('wusTicker').value.trim().toUpperCase();
+    var name = document.getElementById('wusName').value.trim() || ticker;
+    var above = parseFloat(document.getElementById('wusAbove').value) || null;
+    var below = parseFloat(document.getElementById('wusBelow').value) || null;
+    if (!ticker) { alert('Isi Ticker.'); return; }
+    watchlist.us.push({ticker:ticker, name:name, alertAbove:above, alertBelow:below, currentPrice:null});
+    document.getElementById('wusTicker').value = '';
+    document.getElementById('wusName').value = '';
+    document.getElementById('wusAbove').value = '';
+    document.getElementById('wusBelow').value = '';
+    document.getElementById('wUSForm').classList.remove('open');
+    fetchWatchlistPrices();
+  });
+
+  // ── WATCHLIST FETCH ──
+  function fetchWatchlistPrices() {
+    var cryptoIds = watchlist.crypto.map(function(c){ return c.id; }).join(',');
+    var p1 = cryptoIds ? fetch('https://api.coingecko.com/api/v3/simple/price?ids='+cryptoIds+'&vs_currencies=usd')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        watchlist.crypto.forEach(function(c){ if(data[c.id]) c.currentPrice = data[c.id].usd; });
+      }).catch(function(){}) : Promise.resolve();
+
+    var p2 = Promise.all(watchlist.us.map(function(u, i) {
+      if (!finnhubKey) { u.currentPrice = 'no-key'; return Promise.resolve(); }
+      return fetch('https://finnhub.io/api/v1/quote?symbol='+u.ticker+'&token='+finnhubKey)
+        .then(function(r){return r.json();})
+        .then(function(data){ u.currentPrice = (data.c && data.c > 0) ? data.c : 'error'; })
+        .catch(function(){ u.currentPrice = 'error'; });
+    }));
+
+    Promise.all([p1, p2]).then(function() {
+      renderWatchlist();
+      saveToStorage();
+    });
+  }
+
+  // ── WATCHLIST RENDER ──
+  function renderWatchlist() {
+    renderWCrypto();
+    renderWUS();
+  }
+
+  function renderWCrypto() {
+    var table = document.getElementById('wCryptoTable');
+    var empty = document.getElementById('wCryptoEmpty');
+    Array.from(table.querySelectorAll('.watch-row')).forEach(function(r){r.remove();});
+    if (!watchlist.crypto.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    watchlist.crypto.forEach(function(c, i) {
+      var price = typeof c.currentPrice === 'number' ? c.currentPrice : null;
+      var aboveHit = price && c.alertAbove && price >= c.alertAbove;
+      var belowHit = price && c.alertBelow && price <= c.alertBelow;
+      var priceDisp = price ? fmtUSD(price) : '<span class="loading-p">loading...</span>';
+      var priceStyle = aboveHit ? 'color:var(--green);font-weight:600;' : belowHit ? 'color:var(--red);font-weight:600;' : '';
+      var row = document.createElement('div');
+      row.className = 'watch-row';
+      row.innerHTML =
+        '<div><div class="aname">'+c.ticker+'</div><div class="aticker">'+c.id+'</div></div>' +
+        '<div class="aprice" style="text-align:right;'+priceStyle+'">'+priceDisp+'</div>' +
+        '<div style="text-align:right;font-size:12px;">'+(c.alertAbove ? '<span class="watch-alert alert-above">'+fmtUSD(c.alertAbove)+'</span>' : '<span class="alert-none">—</span>')+'</div>' +
+        '<div style="text-align:right;font-size:12px;">'+(c.alertBelow ? '<span class="watch-alert alert-below">'+fmtUSD(c.alertBelow)+'</span>' : '<span class="alert-none">—</span>')+'</div>' +
+        '<button class="del-btn" data-i="'+i+'" data-cat="wcrypto">✕</button>';
+      table.appendChild(row);
+    });
+  }
+
+  function renderWUS() {
+    var table = document.getElementById('wUSTable');
+    var empty = document.getElementById('wUSEmpty');
+    Array.from(table.querySelectorAll('.watch-row')).forEach(function(r){r.remove();});
+    if (!watchlist.us.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    watchlist.us.forEach(function(s, i) {
+      var price = typeof s.currentPrice === 'number' ? s.currentPrice : null;
+      var aboveHit = price && s.alertAbove && price >= s.alertAbove;
+      var belowHit = price && s.alertBelow && price <= s.alertBelow;
+      var priceDisp = s.currentPrice === 'no-key' ? '<span class="error-p">add API key</span>' :
+                      s.currentPrice === 'error' ? '<span class="error-p">error</span>' :
+                      price ? fmtUSD(price) : '<span class="loading-p">loading...</span>';
+      var priceStyle = aboveHit ? 'color:var(--green);font-weight:600;' : belowHit ? 'color:var(--red);font-weight:600;' : '';
+      var row = document.createElement('div');
+      row.className = 'watch-row';
+      row.innerHTML =
+        '<div><div class="aname">'+s.ticker+'</div><div class="aticker">'+s.name+'</div></div>' +
+        '<div class="aprice" style="text-align:right;'+priceStyle+'">'+priceDisp+'</div>' +
+        '<div style="text-align:right;font-size:12px;">'+(s.alertAbove ? '<span class="watch-alert alert-above">'+fmtUSD(s.alertAbove)+'</span>' : '<span class="alert-none">—</span>')+'</div>' +
+        '<div style="text-align:right;font-size:12px;">'+(s.alertBelow ? '<span class="watch-alert alert-below">'+fmtUSD(s.alertBelow)+'</span>' : '<span class="alert-none">—</span>')+'</div>' +
+        '<button class="del-btn" data-i="'+i+'" data-cat="wus">✕</button>';
+      table.appendChild(row);
+    });
+  }
+
+  // ── LOCALSTORAGE ──
+  function saveToStorage() {
+    try {
+      var data = {
+        version: 1,
+        fxRate: fx(),
+        finnhubKey: finnhubKey,
+        portfolio: portfolio,
+        watchlist: watchlist,
+        cashIDR: getCashIDR()
+      };
+      localStorage.setItem('portfolio_tracker', JSON.stringify(data));
+    } catch(e) { console.warn('Save failed:', e); }
+  }
+
+  function loadFromStorage() {
+    try {
+      var raw = localStorage.getItem('portfolio_tracker');
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!data.portfolio) return false;
+      portfolio = data.portfolio;
+      portfolio.crypto = portfolio.crypto || [];
+      portfolio.us = portfolio.us || [];
+      portfolio.idx = portfolio.idx || [];
+      if (data.fxRate) document.getElementById('fxRate').value = data.fxRate;
+      if (data.finnhubKey) {
+        finnhubKey = data.finnhubKey;
+        document.getElementById('finnhubKey').value = finnhubKey;
+      }
+      if (finnhubKey) document.getElementById('apiStatus').textContent = '✓ Finnhub saved';
+      if (data.watchlist) {
+        watchlist = data.watchlist;
+        watchlist.crypto = watchlist.crypto || [];
+        watchlist.us = watchlist.us || [];
+      }
+      if (data.cashIDR) document.getElementById('cashIDR').value = data.cashIDR;
+      return true;
+    } catch(e) { return false; }
+  }
+
+  // ── INIT ──
+  var hadSavedData = loadFromStorage();
+  recalcAll();
+  if (hadSavedData) {
+    refreshAll();
+  }
+  document.getElementById('lastUpdate').textContent = hadSavedData ? 'loaded from storage' : 'not refreshed yet';
+})();
+</script>
+</body>
+</html>
