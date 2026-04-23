@@ -624,20 +624,10 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
   }
 
   // ── FETCH IDX PRICE ──
+  // Yahoo Finance blocked by CORS on hosted environments
+  // IDX prices are manual input only
   function fetchIDXPrice(ticker, callback) {
-    var symbol = ticker.toUpperCase() + '.JK';
-    var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=1d';
-    fetch(url)
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var price = null;
-        try {
-          var result = data.chart.result[0];
-          price = result.meta.regularMarketPrice;
-        } catch(e) { price = null; }
-        callback(price);
-      })
-      .catch(function() { callback(null); });
+    callback(null);
   }
 
   // ── RENDER CRYPTO ──
