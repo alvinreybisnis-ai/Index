@@ -139,12 +139,11 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
 .alert-none{color:var(--text3);}
 </style>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-    const firebaseConfig = {
+  <!-- Firebase via CDN compat version (no module, global scope) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script>
+    var firebaseConfig = {
       apiKey: "AIzaSyDsbbkQNfRn7rin1kEtyZI97Z3clGQiij4",
       authDomain: "indexai-20c06.firebaseapp.com",
       projectId: "indexai-20c06",
@@ -152,15 +151,11 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
       messagingSenderId: "158347941717",
       appId: "1:158347941717:web:87ccdfcf3ed944f60581dc"
     };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const docRef = doc(db, "portfolio", "main");
-
-    // expose to global scope for main script
-    window._fb = { db, doc, setDoc, getDoc, onSnapshot, docRef };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.firestore();
+    var docRef = db.collection("portfolio").doc("main");
+    window._fb = { db: db, docRef: docRef };
     window._fbReady = true;
-    window.dispatchEvent(new Event('fbready'));
   </script>
 </head>
 <body>
