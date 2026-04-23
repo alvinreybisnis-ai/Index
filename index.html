@@ -138,6 +138,30 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
 .alert-below{background:rgba(248,113,113,0.15);color:var(--red);}
 .alert-none{color:var(--text3);}
 </style>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsbbkQNfRn7rin1kEtyZI97Z3clGQiij4",
+      authDomain: "indexai-20c06.firebaseapp.com",
+      projectId: "indexai-20c06",
+      storageBucket: "indexai-20c06.firebasestorage.app",
+      messagingSenderId: "158347941717",
+      appId: "1:158347941717:web:87ccdfcf3ed944f60581dc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const docRef = doc(db, "portfolio", "main");
+
+    // expose to global scope for main script
+    window._fb = { db, doc, setDoc, getDoc, onSnapshot, docRef };
+    window._fbReady = true;
+    window.dispatchEvent(new Event('fbready'));
+  </script>
 </head>
 <body>
 <div class="app" id="appRoot">
@@ -152,6 +176,7 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
       <button class="hbtn" id="importBtn">⬆ Import</button>
       <button class="hbtn" id="privacyBtn">👁 Privacy</button>
       <button class="hbtn" id="refreshBtn">↻ Refresh</button>
+      <span id="syncStatus" style="font-size:10px;color:#4a5248;letter-spacing:1px;align-self:center;">⏳ connecting...</span>
     </div>
   </div>
 
