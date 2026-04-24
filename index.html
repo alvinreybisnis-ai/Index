@@ -171,7 +171,7 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
       <button class="hbtn" id="importBtn">⬆ Import</button>
       <button class="hbtn" id="privacyBtn">👁 Privacy</button>
       <button class="hbtn" id="refreshBtn">↻ Refresh</button>
-      <span id="syncStatus" style="font-size:10px;color:#4a5248;letter-spacing:1px;align-self:center;">⏳ connecting...</span>
+      <span id="syncStatus" style="font-size:10px;color:#4a5248;letter-spacing:1px;align-self:center;"></span>
     </div>
   </div>
 
@@ -1227,81 +1227,67 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
   document.getElementById('lastUpdate').textContent = hadSavedData ? 'loaded from storage' : 'not refreshed yet';
 })();
 
-// ── FIREBASE INIT (outside IIFE so Firestore callbacks can call app functions) ──
-(function() {
-  function waitReady(cb) {
-    if (window._fbReady && window._appReady) { cb(); }
-    else { setTimeout(function(){ waitReady(cb); }, 100); }
-  }
+// ── FIREBASE SYNC ──
+function _sync() {
+  var st = document.getElementById('syncStatus');
+  function setStatus(msg, color) { if(st){ st.textContent=msg; st.style.color=color||'#4a5248'; } }
 
-  function setSyncStatus(msg, color) {
-    var el = document.getElementById('syncStatus');
-    if (el) { el.textContent = msg; el.style.color = color || '#4a5248'; }
-  }
+  if (!window._fbReady || !window._fb) { setStatus('✗ Firebase not loaded','#f87171'); return; }
+  setStatus('⏳ loading...','#fbbf24');
 
-  function applyRemoteData(data) {
-    if (!data || !data.portfolio) return;
-    // push into localStorage so IIFE picks it up via its own applyData
-    localStorage.setItem('portfolio_tracker', JSON.stringify(data));
-    // reload the page to apply cleanly
-    setSyncStatus('✓ synced — reloading...', '#4ade80');
-    setTimeout(function(){ location.reload(); }, 800);
-  }
+  var docRef = window._fb.docRef;
+  docRef.get().then(function(snap) {
+    var local = null;
+    try { local = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
 
-  waitReady(function() {
-    setSyncStatus('⏳ loading...', '#fbbf24');
-    var docRef = window._fb.docRef;
-
-    docRef.get().then(function(snap) {
-      if (snap.exists) {
-        var remote = snap.data();
-        var local = null;
-        try { local = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
-        // if remote is newer than local, apply remote
-        var remoteTime = remote.updatedAt || '';
-        var localTime = (local && local.updatedAt) || '';
-        if (remoteTime > localTime) {
-          localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
-          setSyncStatus('✓ synced', '#4ade80');
-          location.reload();
-        } else {
-          setSyncStatus('✓ synced', '#4ade80');
-        }
-      } else {
-        // no remote data yet — save local to Firebase
-        var local = null;
-        try { local = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
-        if (local) {
-          local.updatedAt = new Date().toISOString();
-          docRef.set(local)
-            .then(function(){ setSyncStatus('✓ synced', '#4ade80'); })
-            .catch(function(){ setSyncStatus('✗ save error', '#f87171'); });
-        } else {
-          setSyncStatus('✓ connected', '#4ade80');
-        }
+    if (snap.exists) {
+      var remote = snap.data();
+      var remoteTime = remote.updatedAt || '';
+      var localTime  = (local && local.updatedAt) || '';
+      if (remoteTime > localTime) {
+        // cloud is newer — update local and reload
+        localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
+        setStatus('✓ synced','#4ade80');
+        location.reload();
+        return;
       }
+      setStatus('✓ synced','#4ade80');
+    } else {
+      // no cloud data — push local up
+      if (local) {
+        local.updatedAt = local.updatedAt || new Date().toISOString();
+        docRef.set(local)
+          .then(function(){ setStatus('✓ synced','#4ade80'); })
+          .catch(function(e){ setStatus('✗ '+e.code,'#f87171'); });
+      } else {
+        setStatus('✓ connected (empty)','#4ade80');
+      }
+    }
 
-      // listen for realtime updates from other devices
-      docRef.onSnapshot(function(snap) {
-        if (!snap.exists) return;
-        var remote = snap.data();
-        var local = null;
-        try { local = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
-        var remoteTime = remote.updatedAt || '';
-        var localTime = (local && local.updatedAt) || '';
-        if (remoteTime > localTime) {
-          localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
-          setSyncStatus('↻ update from cloud...', '#fbbf24');
-          setTimeout(function(){ location.reload(); }, 600);
-        }
-      });
+    // realtime listener for updates from other devices
+    docRef.onSnapshot(function(snap) {
+      if (!snap.exists) return;
+      var remote = snap.data();
+      var local2 = null;
+      try { local2 = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
+      var remoteTime = remote.updatedAt || '';
+      var localTime  = (local2 && local2.updatedAt) || '';
+      if (remoteTime > localTime) {
+        localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
+        setStatus('↻ updating...','#fbbf24');
+        setTimeout(function(){ location.reload(); }, 500);
+      }
+    }, function(e){ setStatus('✗ '+e.code,'#f87171'); });
 
-    }).catch(function(e) {
-      setSyncStatus('✗ error: '+e.code, '#f87171');
-      console.warn(e);
-    });
-  });
-})();
+  }).catch(function(e){ setStatus('✗ '+e.code,'#f87171'); console.warn(e); });
+}
+
+// wait for both Firebase and DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _sync);
+} else {
+  _sync();
+}
 </script>
 </body>
 </html>
