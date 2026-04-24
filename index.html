@@ -1236,6 +1236,8 @@ function _sync() {
   setStatus('⏳ loading...','#fbbf24');
 
   var docRef = window._fb.docRef;
+  var isFirstSnapshot = true;
+
   docRef.get().then(function(snap) {
     var local = null;
     try { local = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
@@ -1244,45 +1246,56 @@ function _sync() {
       var remote = snap.data();
       var remoteTime = remote.updatedAt || '';
       var localTime  = (local && local.updatedAt) || '';
+
       if (remoteTime > localTime) {
-        // cloud is newer — update local and reload
+        // cloud is newer — apply to localStorage and reload ONCE
         localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
         setStatus('✓ synced','#4ade80');
+        window._skipReload = true; // prevent snapshot listener from reloading again
         location.reload();
         return;
       }
+      // local is same or newer — push local up if needed
+      if (local && localTime > remoteTime) {
+        docRef.set(local).catch(function(e){ console.warn(e); });
+      }
       setStatus('✓ synced','#4ade80');
     } else {
-      // no cloud data — push local up
+      // no cloud data yet — push local
       if (local) {
         local.updatedAt = local.updatedAt || new Date().toISOString();
         docRef.set(local)
           .then(function(){ setStatus('✓ synced','#4ade80'); })
           .catch(function(e){ setStatus('✗ '+e.code,'#f87171'); });
       } else {
-        setStatus('✓ connected (empty)','#4ade80');
+        setStatus('✓ connected','#4ade80');
       }
     }
 
-    // realtime listener for updates from other devices
+    // realtime listener — only reload if genuinely newer from another device
+    // skip first snapshot (it fires immediately and duplicates the get() above)
     docRef.onSnapshot(function(snap) {
+      if (isFirstSnapshot) { isFirstSnapshot = false; return; }
       if (!snap.exists) return;
       var remote = snap.data();
       var local2 = null;
       try { local2 = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
       var remoteTime = remote.updatedAt || '';
       var localTime  = (local2 && local2.updatedAt) || '';
-      if (remoteTime > localTime) {
+      // only reload if remote is strictly newer by more than 2 seconds
+      // (avoids reloading from our own saves)
+      var diff = new Date(remoteTime) - new Date(localTime);
+      if (diff > 2000) {
         localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
-        setStatus('↻ updating...','#fbbf24');
-        setTimeout(function(){ location.reload(); }, 500);
+        setStatus('↻ update dari device lain...','#fbbf24');
+        setTimeout(function(){ location.reload(); }, 800);
       }
     }, function(e){ setStatus('✗ '+e.code,'#f87171'); });
 
   }).catch(function(e){ setStatus('✗ '+e.code,'#f87171'); console.warn(e); });
 }
 
-// wait for both Firebase and DOM to be ready
+// wait for DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _sync);
 } else {
