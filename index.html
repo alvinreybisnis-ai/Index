@@ -1227,43 +1227,50 @@ body{font-family:'DM Mono',monospace;color:var(--text);padding:0;}
   document.getElementById('lastUpdate').textContent = hadSavedData ? 'loaded from storage' : 'not refreshed yet';
 })();
 
-// ── FIREBASE SYNC ──
+// ── FIREBASE SYNC (no reload — apply data directly) ──
 function _sync() {
   var st = document.getElementById('syncStatus');
   function setStatus(msg, color) { if(st){ st.textContent=msg; st.style.color=color||'#4a5248'; } }
-
   if (!window._fbReady || !window._fb) { setStatus('✗ Firebase not loaded','#f87171'); return; }
   setStatus('⏳ loading...','#fbbf24');
 
   var docRef = window._fb.docRef;
-  var isFirstSnapshot = true;
+  var lastAppliedTime = '';
 
+  function applyAndRender(data) {
+    if (!data || !data.portfolio) return;
+    try { localStorage.setItem('portfolio_tracker', JSON.stringify(data)); } catch(e){}
+    lastAppliedTime = data.updatedAt || '';
+    // dispatch custom event so main IIFE can re-apply
+    window.dispatchEvent(new CustomEvent('clouddata', {detail: data}));
+    setStatus('✓ synced','#4ade80');
+  }
+
+  // initial load from cloud
   docRef.get().then(function(snap) {
     var local = null;
     try { local = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
+    var localTime = (local && local.updatedAt) || '';
 
     if (snap.exists) {
       var remote = snap.data();
       var remoteTime = remote.updatedAt || '';
-      var localTime  = (local && local.updatedAt) || '';
-
+      lastAppliedTime = remoteTime;
       if (remoteTime > localTime) {
-        // cloud is newer — apply to localStorage and reload ONCE
-        localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
+        applyAndRender(remote);
+      } else {
+        // local is same or newer — push to cloud if newer
+        if (local && localTime > remoteTime) {
+          docRef.set(local).catch(function(e){console.warn(e);});
+        }
         setStatus('✓ synced','#4ade80');
-        window._skipReload = true; // prevent snapshot listener from reloading again
-        location.reload();
-        return;
+        lastAppliedTime = localTime;
       }
-      // local is same or newer — push local up if needed
-      if (local && localTime > remoteTime) {
-        docRef.set(local).catch(function(e){ console.warn(e); });
-      }
-      setStatus('✓ synced','#4ade80');
     } else {
-      // no cloud data yet — push local
+      // nothing in cloud — push local
       if (local) {
         local.updatedAt = local.updatedAt || new Date().toISOString();
+        lastAppliedTime = local.updatedAt;
         docRef.set(local)
           .then(function(){ setStatus('✓ synced','#4ade80'); })
           .catch(function(e){ setStatus('✗ '+e.code,'#f87171'); });
@@ -1272,30 +1279,20 @@ function _sync() {
       }
     }
 
-    // realtime listener — only reload if genuinely newer from another device
-    // skip first snapshot (it fires immediately and duplicates the get() above)
+    // realtime listener — NO reload, just apply data directly
     docRef.onSnapshot(function(snap) {
-      if (isFirstSnapshot) { isFirstSnapshot = false; return; }
       if (!snap.exists) return;
       var remote = snap.data();
-      var local2 = null;
-      try { local2 = JSON.parse(localStorage.getItem('portfolio_tracker')); } catch(e){}
       var remoteTime = remote.updatedAt || '';
-      var localTime  = (local2 && local2.updatedAt) || '';
-      // only reload if remote is strictly newer by more than 2 seconds
-      // (avoids reloading from our own saves)
-      var diff = new Date(remoteTime) - new Date(localTime);
-      if (diff > 2000) {
-        localStorage.setItem('portfolio_tracker', JSON.stringify(remote));
-        setStatus('↻ update dari device lain...','#fbbf24');
-        setTimeout(function(){ location.reload(); }, 800);
-      }
+      // skip if this is data we just saved (same timestamp)
+      if (remoteTime <= lastAppliedTime) return;
+      lastAppliedTime = remoteTime;
+      applyAndRender(remote);
     }, function(e){ setStatus('✗ '+e.code,'#f87171'); });
 
   }).catch(function(e){ setStatus('✗ '+e.code,'#f87171'); console.warn(e); });
 }
 
-// wait for DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _sync);
 } else {
